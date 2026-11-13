@@ -1,0 +1,97 @@
+# Issue watcher configuration.
+# Edit this file on GitHub to add or remove repos; the next run picks it up.
+
+[settings]
+# How far back each run looks. Runs every 15 minutes, so 6 hours gives plenty of
+# overlap if GitHub delays a run; issues already sent are never sent twice.
+lookback_hours = 6
+
+# Also alert when an OLDER issue gets one of these labels (maintainers often add
+# them later). New issues are reported whether or not they have a label.
+watch_labels = ["help wanted", "good first issue"]
+
+# Issues with any of these labels are ignored (case-insensitive).
+exclude_labels = [
+  "lifecycle/stale", "lifecycle/rotten",
+  "kind/support", "question",
+  "kind/documentation", "area/docs", "area/documentation", "documentation", "docs",
+]
+
+# Issues whose title matches any of these regexes are ignored.
+# Kueue marks documentation issues with the 📖 emoji.
+exclude_title_patterns = ['^\W*📖', '(?i)^\W*\[?docs?\]?\s*:']
+
+# Issues opened by these accounts are ignored.
+exclude_authors = ["dependabot[bot]", "renovate[bot]"]
+
+# Issues where the reporter or a commenter seems to have claimed the work are
+# listed in a separate "possibly claimed" section, so you can judge for yourself.
+# Set to false to drop them entirely.
+show_possibly_claimed = true
+
+# Text that suggests someone is already on it (case-insensitive regexes).
+claim_patterns = [
+  '''(?m)^\s*/assign\b''',
+  '''\bI(?:'m| am) (?:working on|looking into|fixing) (?:this|it|a fix)''',
+  '''\bI(?:'ll| will| can| could|'d like to| would like to| want to|'d be happy to|'m happy to| am happy to) (?:send|open|submit|raise|create|put up|work on|take|pick up)\b''',
+  '''\b(?:can|could|may) I (?:work on|take|pick up|handle) (?:this|it)\b''',
+  '''\bPR (?:is )?(?:incoming|coming|on (?:the|its) way|in progress)\b''',
+]
+
+# Sent issues are remembered this long, then forgotten to keep the state file small.
+forget_after_days = 21
+
+
+# ---- Kubernetes -------------------------------------------------------------
+
+[[repo]]
+name = "kubernetes-sigs/kueue"
+
+[[repo]]
+name = "kubernetes-sigs/cluster-api"
+
+[[repo]]
+name = "kubernetes-sigs/gateway-api"
+
+[[repo]]
+name = "kubernetes-sigs/controller-runtime"
+
+[[repo]]
+name = "kubernetes-sigs/karpenter"
+
+[[repo]]
+name = "kubernetes-sigs/jobset"
+
+[[repo]]
+name = "kubernetes-sigs/kind"
+
+# The main repo is far too busy to report every new issue, so only issues
+# carrying one of these labels are reported. Set enabled = false to turn it off.
+[[repo]]
+name = "kubernetes/kubernetes"
+require_any_label = ["help wanted", "good first issue"]
+enabled = true
+
+
+# ---- PostgreSQL ecosystem ---------------------------------------------------
+
+[[repo]]
+name = "pgagroal/pgagroal"
+
+[[repo]]
+name = "pgmoneta/pgmoneta"
+
+[[repo]]
+name = "pgmoneta/pgmoneta_mcp"      # Rust MCP server
+
+[[repo]]
+name = "pgmoneta/pgmoneta_ext"      # server-side extension
+
+[[repo]]
+name = "pgexporter/pgexporter"
+
+[[repo]]
+name = "cybertec-postgresql/pgwatch"
+
+[[repo]]
+name = "pgjdbc/pgjdbc"
