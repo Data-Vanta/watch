@@ -2,7 +2,7 @@ name: Issue watcher
 
 on:
   schedule:
-        - cron: "7,22,37,52 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:            # "Run workflow" button for testing
     inputs:
       mode:
