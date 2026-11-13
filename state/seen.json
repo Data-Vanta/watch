@@ -1,1 +1,17 @@
-{}
+{
+ "kubernetes-sigs/controller-runtime#3656": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/controller-runtime#3660": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/gateway-api#5459": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3583": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3585": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3593": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3597": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3602": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3605": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/karpenter#3606": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/kueue#18652": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/kueue#18659": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/kueue#18726": "2026-11-13T11:01:45+00:00",
+ "kubernetes-sigs/kueue#18732": "2026-11-13T11:01:45+00:00",
+ "pgmoneta/pgmoneta#1576": "2026-11-13T11:01:45+00:00"
+}
