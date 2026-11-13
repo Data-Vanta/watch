@@ -1,0 +1,60 @@
+name: Issue watcher
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"      # every 15 minutes (GitHub may delay busy-hour runs)
+  workflow_dispatch:            # "Run workflow" button for testing
+    inputs:
+      mode:
+        description: "run = normal, dry-run = log only, test-notify = check your channels"
+        type: choice
+        options: [run, dry-run, test-notify]
+        default: run
+      lookback_hours:
+        description: "Optional: look further back this once (hours), e.g. 72"
+        required: false
+        default: ""
+
+permissions:
+  contents: write               # to save state/seen.json so nothing is sent twice
+
+concurrency:
+  group: issue-watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Look for unclaimed issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WATCHER_MODE: ${{ inputs.mode }}
+          WATCHER_LOOKBACK_HOURS: ${{ inputs.lookback_hours }}
+          # Email (any SMTP; defaults to Gmail)
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          # Telegram
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Discord
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 watcher.py
+
+      - name: Remember what was sent
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'run' }}
+        run: |
+          if [ -n "$(git status --porcelain state/)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/seen.json
+            git commit -m "Remember sent issues"
+            git push
+          fi
