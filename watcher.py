@@ -31,7 +31,7 @@ from pathlib import Path
 API = "https://api.github.com"
 ROOT = Path(__file__).resolve().parent
 STATE_FILE = ROOT / "state" / "seen.json"
-SEARCH_PAUSE = 2.2  # authenticated search allows 30 requests a minute
+SEARCH_PAUSE = 6.5  # stays under 10 searches a minute, the lowest limit GitHub applies
 USER_AGENT = "issue-watcher (github actions)"
 
 
@@ -58,22 +58,24 @@ def gh(path, params=None):
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
     if os.environ.get("GITHUB_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["GITHUB_TOKEN"]
-    for attempt in range(4):
+    for attempt in range(3):
         try:
             return http_json(url, headers=headers)
         except urllib.error.HTTPError as err:
-            last = attempt == 3
+            last = attempt == 2
             if err.code in (403, 429) and not last:
-                retry_after = err.headers.get("retry-after")
-                reset = err.headers.get("x-ratelimit-reset")
+                h = err.headers
+                retry_after, reset = h.get("retry-after"), h.get("x-ratelimit-reset")
                 if retry_after:
                     wait = int(retry_after)
                 elif reset:
                     wait = int(reset) - int(time.time()) + 1
                 else:
                     wait = 30
-                wait = max(5, min(wait, 90))
-                log(f"  rate limited, waiting {wait}s")
+                wait = max(5, min(wait, 65))
+                log(f"  rate limited ({h.get('x-ratelimit-resource', '?')}: limit "
+                    f"{h.get('x-ratelimit-limit', '?')}, remaining {h.get('x-ratelimit-remaining', '?')}), "
+                    f"waiting {wait}s")
                 time.sleep(wait)
                 continue
             if err.code >= 500 and not last:
@@ -82,10 +84,24 @@ def gh(path, params=None):
             raise
 
 
-def search_issues(query):
-    data = gh("/search/issues", {"q": query, "per_page": 100, "sort": "created", "order": "desc"})
-    time.sleep(SEARCH_PAUSE)
-    return data.get("items", [])
+_last_search = [0.0]
+
+
+def search_issues(query, max_pages=3):
+    """Run one search (up to max_pages x 100 results), pacing calls to stay under the limit."""
+    items = []
+    for page in range(1, max_pages + 1):
+        wait = _last_search[0] + SEARCH_PAUSE - time.time()
+        if wait > 0:
+            time.sleep(wait)
+        data = gh("/search/issues", {"q": query, "per_page": 100, "page": page,
+                                     "sort": "updated", "order": "desc"})
+        _last_search[0] = time.time()
+        batch = data.get("items", [])
+        items.extend(batch)
+        if len(batch) < 100:
+            break
+    return items
 
 
 def inspect_timeline(repo, number, claim_res):
@@ -130,87 +146,121 @@ def ago(dt, now):
     return f"{int(hours / 24)} days ago"
 
 
-def collect(cfg, since, now, seen):
+def build_queries(cfg, since_q):
+    """Group repos into as few searches as possible.
+
+    Normal repos share one query (several repo: qualifiers, kept under GitHub's
+    256-character query limit) for every issue updated in the window; new issues
+    and newly labelled ones are picked out locally. Repos with require_any_label
+    get one query per required label instead.
+    """
+    tail = f"is:issue is:open no:assignee -linked:pr updated:>={since_q}"
+    queries, batch = [], []
+    for r in cfg.get("repo", []):
+        if not r.get("enabled", True):
+            continue
+        if r.get("require_any_label"):
+            for label in r["require_any_label"]:
+                queries.append(f'repo:{r["name"]} label:"{label}" {tail}')
+            continue
+        candidate = batch + [r["name"]]
+        if batch and len(" ".join(f"repo:{n}" for n in candidate) + " " + tail) > 250:
+            queries.append(" ".join(f"repo:{n}" for n in batch) + " " + tail)
+            candidate = [r["name"]]
+        batch = candidate
+    if batch:
+        queries.append(" ".join(f"repo:{n}" for n in batch) + " " + tail)
+    return queries
+
+
+def collect(cfg, since, now, seen, deadline):
     s = cfg["settings"]
     exclude_labels = {l.lower() for l in s.get("exclude_labels", [])}
     exclude_title = [re.compile(p) for p in s.get("exclude_title_patterns", [])]
     exclude_authors = {a.lower() for a in s.get("exclude_authors", [])}
+    watch_labels = {l.lower() for l in s.get("watch_labels", [])}
     claim_res = [re.compile(p, re.IGNORECASE) for p in s.get("claim_patterns", [])]
+    repo_cfgs = {r["name"].lower(): r for r in cfg.get("repo", []) if r.get("enabled", True)}
     since_q = since.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-    available, claimed, failed_repos = [], [], []
-    for repo_cfg in cfg.get("repo", []):
-        if not repo_cfg.get("enabled", True):
+    found, failed = {}, []
+    queries = build_queries(cfg, since_q)
+    log(f"{len(queries)} search queries for {len(repo_cfgs)} repos")
+    for q in queries:
+        if time.time() > deadline:
+            log("Time budget reached; skipping the remaining searches this run.")
+            failed.append(q.split(" is:issue")[0])
+            break
+        try:
+            for item in search_issues(q):
+                repo = item["repository_url"].split("/repos/", 1)[1]
+                found[f"{repo}#{item['number']}"] = (repo, item)
+        except Exception as err:  # keep going with the other queries
+            log(f"search failed ({err}) for: {q.split(' is:issue')[0]}")
+            failed.append(q.split(" is:issue")[0])
+
+    available, claimed = [], []
+    per_repo = {}
+    for key, (repo, item) in sorted(found.items()):
+        rc = repo_cfgs.get(repo.lower(), {})
+        required = {l.lower() for l in rc.get("require_any_label", [])}
+        labels = [l["name"] for l in item.get("labels", [])]
+        lower = {l.lower() for l in labels}
+        author = (item.get("user") or {}).get("login", "")
+        created = parse_time(item["created_at"])
+        is_new = created >= since
+
+        if key in seen or item.get("assignees") or item.get("pull_request"):
             continue
-        repo = repo_cfg["name"]
-        required = [l.lower() for l in repo_cfg.get("require_any_label", [])]
-        base = f"repo:{repo} is:issue is:open no:assignee -linked:pr"
-        queries = []
-        if not required:
-            queries.append(f"{base} created:>={since_q}")
-        for label in required or s.get("watch_labels", []):
-            queries.append(f'{base} label:"{label}" updated:>={since_q}')
+        if lower & exclude_labels or author.lower() in exclude_authors:
+            continue
+        if any(rx.search(item["title"]) for rx in exclude_title):
+            continue
+        if required:
+            if not lower & required:
+                continue
+        elif not is_new and not lower & watch_labels:
+            continue  # an old issue that was merely updated
+        if time.time() > deadline:
+            log(f"Time budget reached; {key} will be checked next run.")
+            continue
 
         try:
-            found = {}
-            for q in queries:
-                for item in search_issues(q):
-                    found[item["number"]] = item
-        except Exception as err:  # keep going with the other repos
-            log(f"{repo}: search failed: {err}")
-            failed_repos.append(repo)
-            continue
+            open_prs, comment_claims = inspect_timeline(repo, item["number"], claim_res)
+        except Exception as err:
+            log(f"{key}: timeline check failed ({err}); reporting without it")
+            open_prs, comment_claims = [], []
+        if open_prs:
+            continue  # someone is already fixing it
 
-        kept = 0
-        for number, item in sorted(found.items(), reverse=True):
-            key = f"{repo}#{number}"
-            labels = [l["name"] for l in item.get("labels", [])]
-            lower = {l.lower() for l in labels}
-            author = (item.get("user") or {}).get("login", "")
-            if key in seen or item.get("assignees") or item.get("pull_request"):
-                continue
-            if lower & exclude_labels or author.lower() in exclude_authors:
-                continue
-            if required and not lower & set(required):
-                continue
-            if any(rx.search(item["title"]) for rx in exclude_title):
-                continue
+        claims = []
+        body_claim = find_claim(item.get("body") or "", claim_res)
+        if body_claim:
+            claims.append((author or "reporter", body_claim))
+        claims.extend(comment_claims)
 
-            try:
-                open_prs, comment_claims = inspect_timeline(repo, number, claim_res)
-            except Exception as err:
-                log(f"{key}: timeline check failed ({err}); reporting without it")
-                open_prs, comment_claims = [], []
-            if open_prs:
-                continue  # someone is already fixing it
+        entry = {
+            "key": key,
+            "repo": repo,
+            "number": item["number"],
+            "title": item["title"].strip(),
+            "url": item["html_url"],
+            "labels": labels,
+            "author": author,
+            "age": ago(created, now),
+            "reason": "new issue" if is_new else "has a watched label, recently labelled or updated",
+            "claims": claims,
+        }
+        if claims:
+            if s.get("show_possibly_claimed", True):
+                claimed.append(entry)
+        else:
+            available.append(entry)
+        per_repo[repo] = per_repo.get(repo, 0) + 1
 
-            claims = []
-            body_claim = find_claim(item.get("body") or "", claim_res)
-            if body_claim:
-                claims.append((author or "reporter", body_claim))
-            claims.extend(comment_claims)
-
-            created = parse_time(item["created_at"])
-            entry = {
-                "key": key,
-                "repo": repo,
-                "number": number,
-                "title": item["title"].strip(),
-                "url": item["html_url"],
-                "labels": labels,
-                "author": author,
-                "age": ago(created, now),
-                "reason": "new issue" if created >= since else "label added or recent activity",
-                "claims": claims,
-            }
-            if claims:
-                if s.get("show_possibly_claimed", True):
-                    claimed.append(entry)
-            else:
-                available.append(entry)
-            kept += 1
-        log(f"{repo}: {len(found)} candidate(s) from search, {kept} reported")
-    return available, claimed, failed_repos
+    log(f"{len(found)} issue(s) from search; reported per repo: "
+        + (", ".join(f"{r.split('/')[1]} {n}" for r, n in sorted(per_repo.items())) or "none"))
+    return available, claimed, failed
 
 
 # ---------------------------------------------------------------- formatting
@@ -416,9 +466,10 @@ def main():
     seen = load_seen() if args.mode == "run" else {}
     log(f"Mode {args.mode}; looking back {lookback:g} h (since {since:%Y-%m-%d %H:%M} UTC)")
 
-    available, claimed, failed = collect(cfg, since, now, seen)
+    deadline = time.time() + 7 * 60  # leave time to send before the 10-minute job timeout
+    available, claimed, failed = collect(cfg, since, now, seen, deadline)
     log(f"Result: {len(available)} available, {len(claimed)} possibly claimed"
-        + (f"; failed repos: {', '.join(failed)}" if failed else ""))
+        + (f"; incomplete searches: {'; '.join(failed)}" if failed else ""))
 
     if not available and not claimed:
         return
