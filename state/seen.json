@@ -16,5 +16,6 @@
  "kubernetes-sigs/kueue#18726": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/kueue#18732": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/kueue#18780": "2026-11-14T07:59:09+00:00",
- "pgmoneta/pgmoneta#1576": "2026-11-13T11:01:45+00:00"
+ "pgmoneta/pgmoneta#1576": "2026-11-13T11:01:45+00:00",
+ "pgmoneta/pgmoneta#1589": "2026-11-14T14:59:08+00:00"
 }
