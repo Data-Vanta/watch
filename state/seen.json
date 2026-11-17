@@ -21,6 +21,8 @@
  "kubernetes-sigs/kueue#18824": "2026-11-15T23:22:57+00:00",
  "kubernetes-sigs/kueue#18825": "2026-11-15T23:22:57+00:00",
  "kubernetes-sigs/kueue#18857": "2026-11-16T11:04:51+00:00",
+ "kubernetes-sigs/kueue#18932": "2026-11-17T03:45:25+00:00",
+ "kubernetes-sigs/kueue#18933": "2026-11-17T03:45:25+00:00",
  "pgexporter/pgexporter#681": "2026-11-15T12:19:51+00:00",
  "pgjdbc/pgjdbc#4532": "2026-11-16T20:59:33+00:00",
  "pgmoneta/pgmoneta#1576": "2026-11-13T11:01:45+00:00",
