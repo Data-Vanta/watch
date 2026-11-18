@@ -1,5 +1,6 @@
 {
  "cybertec-postgresql/pgwatch#1649": "2026-11-16T11:04:51+00:00",
+ "kubernetes-sigs/cluster-api#14526": "2026-11-18T02:59:14+00:00",
  "kubernetes-sigs/controller-runtime#3656": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3660": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/gateway-api#5459": "2026-11-13T11:01:45+00:00",
