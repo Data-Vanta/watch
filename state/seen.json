@@ -1,6 +1,7 @@
 {
  "cybertec-postgresql/pgwatch#1649": "2026-11-16T11:04:51+00:00",
  "kubernetes-sigs/cluster-api#14526": "2026-11-18T02:59:14+00:00",
+ "kubernetes-sigs/cluster-api#14531": "2026-11-19T18:38:38+00:00",
  "kubernetes-sigs/controller-runtime#3656": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3660": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/gateway-api#5459": "2026-11-13T11:01:45+00:00",
@@ -27,6 +28,8 @@
  "kubernetes-sigs/kueue#19072": "2026-11-18T19:34:08+00:00",
  "kubernetes-sigs/kueue#19080": "2026-11-18T19:34:08+00:00",
  "kubernetes-sigs/kueue#19084": "2026-11-18T19:34:08+00:00",
+ "kubernetes-sigs/kueue#19164": "2026-11-19T18:38:38+00:00",
+ "kubernetes-sigs/kueue#19168": "2026-11-19T18:38:38+00:00",
  "kubernetes/kubernetes#144319": "2026-11-19T01:28:33+00:00",
  "pgexporter/pgexporter#681": "2026-11-15T12:19:51+00:00",
  "pgjdbc/pgjdbc#4532": "2026-11-16T20:59:33+00:00",
