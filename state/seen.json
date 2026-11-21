@@ -6,6 +6,7 @@
  "kubernetes-sigs/controller-runtime#3656": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3660": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3670": "2026-11-20T23:13:04+00:00",
+ "kubernetes-sigs/controller-runtime#3671": "2026-11-21T19:47:24+00:00",
  "kubernetes-sigs/gateway-api#5459": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/gateway-api#5466": "2026-11-14T01:26:04+00:00",
  "kubernetes-sigs/gateway-api#5478": "2026-11-20T17:14:55+00:00",
