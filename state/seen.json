@@ -38,9 +38,12 @@
  "kubernetes-sigs/kueue#19202": "2026-11-20T17:14:55+00:00",
  "kubernetes-sigs/kueue#19215": "2026-11-20T17:14:55+00:00",
  "kubernetes-sigs/kueue#19255": "2026-11-20T23:13:04+00:00",
+ "kubernetes-sigs/kueue#19279": "2026-11-21T23:58:27+00:00",
  "kubernetes/kubernetes#144319": "2026-11-19T01:28:33+00:00",
+ "pgagroal/pgagroal#1111": "2026-11-21T23:58:27+00:00",
  "pgexporter/pgexporter#681": "2026-11-15T12:19:51+00:00",
  "pgexporter/pgexporter#689": "2026-11-20T23:13:04+00:00",
+ "pgexporter/pgexporter#693": "2026-11-21T23:58:27+00:00",
  "pgjdbc/pgjdbc#4532": "2026-11-16T20:59:33+00:00",
  "pgjdbc/pgjdbc#4533": "2026-11-18T19:34:08+00:00",
  "pgmoneta/pgmoneta#1576": "2026-11-13T11:01:45+00:00",
@@ -54,8 +57,11 @@
  "pgmoneta/pgmoneta#1625": "2026-11-17T21:19:00+00:00",
  "pgmoneta/pgmoneta#1641": "2026-11-18T11:30:55+00:00",
  "pgmoneta/pgmoneta#1660": "2026-11-20T08:28:36+00:00",
+ "pgmoneta/pgmoneta#1668": "2026-11-21T23:58:27+00:00",
  "pgmoneta/pgmoneta_ext#41": "2026-11-15T12:19:51+00:00",
+ "pgmoneta/pgmoneta_ext#45": "2026-11-21T23:58:27+00:00",
  "pgmoneta/pgmoneta_mcp#210": "2026-11-15T12:19:51+00:00",
  "pgmoneta/pgmoneta_mcp#217": "2026-11-17T12:33:19+00:00",
- "pgmoneta/pgmoneta_mcp#225": "2026-11-20T08:28:36+00:00"
+ "pgmoneta/pgmoneta_mcp#225": "2026-11-20T08:28:36+00:00",
+ "pgmoneta/pgmoneta_mcp#229": "2026-11-21T23:58:27+00:00"
 }
