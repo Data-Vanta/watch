@@ -4,6 +4,7 @@
  "kubernetes-sigs/cluster-api#14531": "2026-11-19T18:38:38+00:00",
  "kubernetes-sigs/cluster-api#14534": "2026-11-21T04:04:32+00:00",
  "kubernetes-sigs/cluster-api#14573": "2026-11-26T11:27:42+00:00",
+ "kubernetes-sigs/cluster-api#14582": "2026-11-27T21:44:44+00:00",
  "kubernetes-sigs/controller-runtime#3656": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3660": "2026-11-13T11:01:45+00:00",
  "kubernetes-sigs/controller-runtime#3670": "2026-11-20T23:13:04+00:00",
